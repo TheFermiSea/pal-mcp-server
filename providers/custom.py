@@ -1,10 +1,14 @@
 """Custom API provider implementation."""
 
 import logging
+from typing import Optional
+
+import httpx
+from openai import OpenAI
 
 from utils.env import get_env
 
-from .openai_compatible import OpenAICompatibleProvider
+from .openai_compatible import OpenAICompatibleProvider, suppress_env_vars
 from .registries.custom import CustomEndpointModelRegistry
 from .registries.openrouter import OpenRouterModelRegistry
 from .shared import ModelCapabilities, ProviderType
@@ -75,6 +79,7 @@ class CustomProvider(OpenAICompatibleProvider):
         logging.info(f"Initializing Custom provider with endpoint: {base_url}")
 
         self._alias_cache: dict[str, str] = {}
+        self._model_clients: dict[str, OpenAI] = {}  # Cache for per-model clients
 
         super().__init__(api_key, base_url=base_url, **kwargs)
 
@@ -85,6 +90,96 @@ class CustomProvider(OpenAICompatibleProvider):
             models = self._registry.list_models()
             aliases = self._registry.list_aliases()
             logging.info(f"Custom provider loaded {len(models)} models with {len(aliases)} aliases")
+
+    # ------------------------------------------------------------------
+    # Per-model base URL support
+    # ------------------------------------------------------------------
+    def _get_model_base_url(self, model_name: str) -> Optional[str]:
+        """Get the base URL for a specific model, if configured."""
+        resolved = self._resolve_model_name(model_name)
+        config = self._registry.resolve(resolved) if self._registry else None
+        if config and config.base_url:
+            return config.base_url
+        return None
+
+    def _get_client_for_model(self, model_name: str) -> OpenAI:
+        """Get or create a client for the given model.
+
+        If the model has a custom base_url configured, returns a dedicated client
+        for that endpoint. Otherwise returns the default client.
+        """
+        model_base_url = self._get_model_base_url(model_name)
+
+        # If no model-specific URL, use default client
+        if not model_base_url:
+            return self.client
+
+        # Check cache for existing client
+        if model_base_url in self._model_clients:
+            return self._model_clients[model_base_url]
+
+        # Create new client for this base URL
+        logging.info(f"Creating client for model '{model_name}' with base URL: {model_base_url}")
+
+        proxy_env_vars = ["HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy"]
+
+        with suppress_env_vars(*proxy_env_vars):
+            timeout_config = (
+                self.timeout_config
+                if hasattr(self, "timeout_config") and self.timeout_config
+                else httpx.Timeout(30.0)
+            )
+
+            http_client = httpx.Client(
+                timeout=timeout_config,
+                follow_redirects=True,
+            )
+
+            client_kwargs = {
+                "api_key": self.api_key,
+                "http_client": http_client,
+                "base_url": model_base_url,
+            }
+
+            new_client = OpenAI(**client_kwargs)
+            self._model_clients[model_base_url] = new_client
+            return new_client
+
+    def generate_content(
+        self,
+        prompt: str,
+        model_name: str,
+        system_prompt: Optional[str] = None,
+        temperature: float = 0.3,
+        max_output_tokens: Optional[int] = None,
+        images: Optional[list[str]] = None,
+        **kwargs,
+    ):
+        """Generate content using the appropriate client for the model.
+
+        Overrides parent to support per-model base URLs.
+        """
+        # Get the appropriate client for this model
+        model_client = self._get_client_for_model(model_name)
+
+        # Temporarily swap the client if using a model-specific one
+        original_client = self._client
+        if model_client is not self._client:
+            self._client = model_client
+
+        try:
+            return super().generate_content(
+                prompt=prompt,
+                model_name=model_name,
+                system_prompt=system_prompt,
+                temperature=temperature,
+                max_output_tokens=max_output_tokens,
+                images=images,
+                **kwargs,
+            )
+        finally:
+            # Restore original client
+            self._client = original_client
 
     # ------------------------------------------------------------------
     # Capability surface

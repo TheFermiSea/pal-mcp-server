@@ -11,6 +11,18 @@
   },
   "models": [
     {
+      "model_name": "llama3.2",
+      "aliases": ["local-llama", "local"],
+      "context_window": 128000,
+      "max_output_tokens": 4096,
+      "supports_extended_thinking": false,
+      "supports_json_mode": false,
+      "supports_function_calling": false,
+      "supports_images": false,
+      "description": "Llama 3.2 via Ollama (local)",
+      "intelligence_score": 10
+    },
+    {
       "model_name": "gemini-2.5-flash",
       "aliases": ["ag-flash", "flash"],
       "context_window": 1000000,
@@ -193,26 +205,28 @@
     {
       "model_name": "or1-behemoth",
       "aliases": ["or1", "behemoth", "or1-b"],
-      "context_window": 1000000,
-      "max_output_tokens": 128000,
+      "base_url": "https://slurm-ctl.tailc46cd0.ts.net/reasoning/v1",
+      "context_window": 128000,
+      "max_output_tokens": 32000,
       "supports_extended_thinking": true,
       "supports_json_mode": true,
-      "supports_function_calling": true,
-      "supports_images": true,
-      "description": "OR1 Behemoth reasoning model",
+      "supports_function_calling": false,
+      "supports_images": false,
+      "description": "OR1 Behemoth 72B reasoning model (3-GPU cluster, manual start required)",
       "intelligence_score": 20
     },
     {
-      "model_name": "strand-rust-coder",
+      "model_name": "strand-rust-coder-14b-q8_0",
       "aliases": ["strand", "strand-coder", "strand-rust", "rust-coder"],
-      "context_window": 200000,
-      "max_output_tokens": 64000,
-      "supports_extended_thinking": true,
+      "base_url": "https://slurm-ctl.tailc46cd0.ts.net/v1",
+      "context_window": 32000,
+      "max_output_tokens": 8000,
+      "supports_extended_thinking": false,
       "supports_json_mode": true,
-      "supports_function_calling": true,
+      "supports_function_calling": false,
       "supports_images": false,
-      "description": "Strand Rust Coder specialized for Rust development",
-      "intelligence_score": 18
+      "description": "Strand Rust Coder 14B (always-on single GPU, specialized for Rust)",
+      "intelligence_score": 14
     }
   ]
 }

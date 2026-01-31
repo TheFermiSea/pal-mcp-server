@@ -64,6 +64,9 @@ class ModelCapabilities:
         default_factory=lambda: RangeTemperatureConstraint(0.0, 2.0, 0.3)
     )
 
+    # Per-model endpoint override (for custom provider only)
+    base_url: Optional[str] = None
+
     def get_effective_temperature(self, requested_temperature: float) -> Optional[float]:
         """Return the temperature that should be sent to the provider.
 
