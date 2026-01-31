@@ -129,7 +129,11 @@ class TestCodeReviewTool:
         schema = tool.get_input_schema()
         assert "relevant_files" in schema["properties"]
         assert "step" in schema["properties"]
-        assert "step_number" in schema["required"]
+        # CodeReview only requires relevant_files to start (workflow fields have defaults)
+        assert "relevant_files" in schema["required"]
+        # Workflow fields should still be in properties but not required
+        assert "step_number" in schema["properties"]
+        assert "step_number" not in schema["required"]
 
     @pytest.mark.asyncio
     async def test_execute_with_review_type(self, tool, tmp_path):

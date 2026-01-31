@@ -64,14 +64,18 @@ CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS = {
 class CodeReviewRequest(WorkflowRequest):
     """Request model for code review workflow investigation steps"""
 
-    # Required fields for each investigation step
-    step: str = Field(..., description=CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS["step"])
-    step_number: int = Field(..., description=CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS["step_number"])
-    total_steps: int = Field(..., description=CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS["total_steps"])
-    next_step_required: bool = Field(..., description=CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS["next_step_required"])
+    # Workflow state fields with sensible defaults for step 1 initialization
+    # Users can start a review by just providing relevant_files
+    step: str = Field(
+        default="Initialize code review",
+        description=CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS["step"],
+    )
+    step_number: int = Field(default=1, description=CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS["step_number"])
+    total_steps: int = Field(default=2, description=CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS["total_steps"])
+    next_step_required: bool = Field(default=True, description=CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS["next_step_required"])
 
     # Investigation tracking fields
-    findings: str = Field(..., description=CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS["findings"])
+    findings: str = Field(default="", description=CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS["findings"])
     files_checked: list[str] = Field(
         default_factory=list, description=CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS["files_checked"]
     )
@@ -234,11 +238,15 @@ class CodeReviewTool(WorkflowTool):
         }
 
         # Use WorkflowSchemaBuilder with code review-specific tool fields
+        # Exclude standard workflow fields from required since they have defaults
+        # Only relevant_files is required to start a code review
         return WorkflowSchemaBuilder.build_schema(
             tool_specific_fields=codereview_field_overrides,
             model_field_schema=self.get_model_field_schema(),
             auto_mode=self.is_effective_auto_mode(),
             tool_name=self.get_name(),
+            excluded_workflow_fields=["step", "step_number", "total_steps", "next_step_required", "findings"],
+            required_fields=["relevant_files"],
         )
 
     def get_required_actions(

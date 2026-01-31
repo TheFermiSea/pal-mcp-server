@@ -155,9 +155,8 @@ class TestThinkingModes:
             try:
                 result = await tool.execute(
                     {
-                        "absolute_file_paths": ["/absolute/path/test.py"],
+                        "relevant_files": ["/absolute/path/test.py"],
                         "thinking_mode": "low",
-                        "prompt": "Test code review for validation purposes",
                         "model": "o3-mini",
                     }
                 )
