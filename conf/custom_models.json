@@ -189,6 +189,30 @@
       "supports_images": false,
       "description": "GPT 5 Codex Mini via OpenAI (direct)",
       "intelligence_score": 14
+    },
+    {
+      "model_name": "or1-behemoth",
+      "aliases": ["or1", "behemoth", "or1-b"],
+      "context_window": 1000000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "description": "OR1 Behemoth reasoning model",
+      "intelligence_score": 20
+    },
+    {
+      "model_name": "strand-rust-coder",
+      "aliases": ["strand", "strand-coder", "strand-rust", "rust-coder"],
+      "context_window": 200000,
+      "max_output_tokens": 64000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": false,
+      "description": "Strand Rust Coder specialized for Rust development",
+      "intelligence_score": 18
     }
   ]
 }
