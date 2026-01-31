@@ -5,7 +5,7 @@ Data models for tool responses and interactions
 from enum import Enum
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ToolModelCategory(Enum):
@@ -44,12 +44,44 @@ class ToolOutput(BaseModel):
         "continuation_available",
         "no_bug_found",
     ] = "success"
+    continuation_id: Optional[str] = Field(
+        None,
+        description=(
+            "Top-level thread continuation ID for multi-turn conversations. Mirrors "
+            "`continuation_offer.continuation_id` so clients that hide nested fields can still display it."
+        ),
+    )
     content: Optional[str] = Field(None, description="The main content/response from the tool")
     content_type: Literal["text", "markdown", "json"] = "text"
     metadata: Optional[dict[str, Any]] = Field(default_factory=dict)
     continuation_offer: Optional[ContinuationOffer] = Field(
         None, description="Optional offer for Agent to continue conversation"
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _sync_continuation_id_from_offer(cls, data: Any) -> Any:
+        """Keep `continuation_id` aligned with `continuation_offer.continuation_id`."""
+
+        if not isinstance(data, dict):
+            return data
+
+        offer = data.get("continuation_offer")
+        if not offer:
+            return data
+
+        offer_id: Optional[str] = None
+        if isinstance(offer, dict):
+            offer_id = offer.get("continuation_id")
+        else:
+            offer_id = getattr(offer, "continuation_id", None)
+
+        if offer_id:
+            # `continuation_offer` remains the source of truth for backward compatibility.
+            if data.get("continuation_id") != offer_id:
+                data["continuation_id"] = offer_id
+
+        return data
 
 
 class FilesNeededRequest(BaseModel):

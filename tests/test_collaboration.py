@@ -11,7 +11,7 @@ import pytest
 from tests.mock_helpers import create_mock_provider
 from tools.analyze import AnalyzeTool
 from tools.debug import DebugIssueTool
-from tools.models import FilesNeededRequest, ToolOutput
+from tools.models import ContinuationOffer, FilesNeededRequest, ToolOutput
 
 
 class TestDynamicContextRequests:
@@ -289,6 +289,110 @@ class TestDynamicContextRequests:
         assert parsed["content"] == "Test content"
         assert parsed["content_type"] == "markdown"
         assert parsed["metadata"]["tool_name"] == "test"
+
+    def test_tool_output_continuation_id_visible(self):
+        """`continuation_id` should be present at top-level when continuation_offer is set."""
+
+        continuation_offer = ContinuationOffer(continuation_id="test-uuid", note="note", remaining_turns=49)
+        output = ToolOutput(
+            status="continuation_available",
+            content="Test content",
+            content_type="text",
+            continuation_offer=continuation_offer,
+        )
+
+        parsed = json.loads(output.model_dump_json())
+        assert parsed["status"] == "continuation_available"
+        assert parsed["continuation_offer"]["continuation_id"] == "test-uuid"
+        assert parsed["continuation_id"] == "test-uuid"
+
+    def test_tool_output_continuation_id_none_when_no_offer(self):
+        """`continuation_id` should be None when no continuation_offer is provided."""
+
+        output = ToolOutput(
+            status="success",
+            content="Test content",
+            content_type="text",
+        )
+
+        parsed = json.loads(output.model_dump_json())
+        assert parsed["status"] == "success"
+        assert parsed["continuation_id"] is None
+        assert parsed["continuation_offer"] is None
+
+    def test_tool_output_continuation_id_synced_from_dict_input(self):
+        """Validator should sync continuation_id when input is a dict (common in deserialization)."""
+
+        # Simulate dict input as would come from JSON parsing
+        data = {
+            "status": "continuation_available",
+            "content": "Test",
+            "continuation_offer": {
+                "continuation_id": "dict-uuid-123",
+                "note": "Continue conversation",
+                "remaining_turns": 10,
+            },
+        }
+
+        output = ToolOutput.model_validate(data)
+        assert output.continuation_id == "dict-uuid-123"
+        assert output.continuation_offer.continuation_id == "dict-uuid-123"
+
+    def test_tool_output_continuation_id_mismatch_uses_offer_value(self):
+        """When top-level and nested IDs differ, offer value takes precedence."""
+
+        data = {
+            "status": "continuation_available",
+            "content": "Test",
+            "continuation_id": "wrong-id",  # Explicitly wrong
+            "continuation_offer": {
+                "continuation_id": "correct-id",
+                "note": "Note",
+                "remaining_turns": 5,
+            },
+        }
+
+        output = ToolOutput.model_validate(data)
+        # Validator should overwrite with offer's value
+        assert output.continuation_id == "correct-id"
+        assert output.continuation_offer.continuation_id == "correct-id"
+
+    def test_tool_output_continuation_id_preserved_without_offer(self):
+        """Top-level continuation_id should be preserved if no offer is provided."""
+
+        data = {
+            "status": "success",
+            "content": "Test",
+            "continuation_id": "standalone-id",
+        }
+
+        output = ToolOutput.model_validate(data)
+        assert output.continuation_id == "standalone-id"
+        assert output.continuation_offer is None
+
+    def test_tool_output_roundtrip_serialization(self):
+        """Ensure continuation_id survives JSON round-trip serialization."""
+
+        original = ToolOutput(
+            status="continuation_available",
+            content="Round-trip test",
+            continuation_offer=ContinuationOffer(
+                continuation_id="roundtrip-uuid",
+                note="Test note",
+                remaining_turns=25,
+            ),
+        )
+
+        # Serialize to JSON
+        json_str = original.model_dump_json()
+
+        # Deserialize back
+        restored = ToolOutput.model_validate_json(json_str)
+
+        assert restored.status == "continuation_available"
+        assert restored.continuation_id == "roundtrip-uuid"
+        assert restored.continuation_offer.continuation_id == "roundtrip-uuid"
+        assert restored.continuation_offer.remaining_turns == 25
 
     def test_clarification_request_model(self):
         """Test FilesNeededRequest model"""

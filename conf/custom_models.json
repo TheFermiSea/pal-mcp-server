@@ -1,41 +1,194 @@
 {
   "_README": {
-    "description": "Model metadata for local/self-hosted OpenAI-compatible endpoints (Custom provider).",
-    "documentation": "https://github.com/BeehiveInnovations/pal-mcp-server/blob/main/docs/custom_models.md",
-    "usage": "Each entry will be advertised by the Custom provider. Aliases are case-insensitive.",
-    "field_notes": "Matches providers/shared/model_capabilities.py.",
-    "field_descriptions": {
-      "model_name": "The model identifier e.g., 'llama3.2'",
-      "aliases": "Array of short names users can type instead of the full model name",
-      "context_window": "Total number of tokens the model can process (input + output combined)",
-      "max_output_tokens": "Maximum number of tokens the model can generate in a single response",
-      "supports_extended_thinking": "Whether the model supports extended reasoning tokens",
-      "supports_json_mode": "Whether the model can guarantee valid JSON output",
-      "supports_function_calling": "Whether the model supports function/tool calling",
-      "supports_images": "Whether the model can process images/visual input",
-      "max_image_size_mb": "Maximum total size in MB for all images combined (capped at 40MB max for custom models)",
-      "supports_temperature": "Whether the model accepts temperature parameter in API calls (set to false for O3/O4 reasoning models)",
-      "temperature_constraint": "Type of temperature constraint: 'fixed' (fixed value), 'range' (continuous range), 'discrete' (specific values), or omit for default range",
-      "description": "Human-readable description of the model",
-      "intelligence_score": "1-20 human rating used as the primary signal for auto-mode model ordering"
+    "description": "Model metadata for vibeproxy endpoint at http://localhost:8317/v1",
+    "providers": {
+      "anthropic": "Direct Anthropic API",
+      "antigravity": "Antigravity proxy (Gemini Flash, Gemini 3, hybrid models)",
+      "github-copilot": "GitHub Copilot (Claude, GPT-5, Grok)",
+      "google": "Native Google Gemini",
+      "openai": "Direct OpenAI API"
     }
   },
   "models": [
     {
-      "model_name": "llama3.2",
-      "aliases": [
-        "local-llama",
-        "ollama-llama"
-      ],
-      "context_window": 128000,
+      "model_name": "gemini-2.5-flash",
+      "aliases": ["ag-flash", "flash"],
+      "context_window": 1000000,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "description": "Gemini 2.5 Flash via Antigravity",
+      "intelligence_score": 14
+    },
+    {
+      "model_name": "gemini-2.5-flash-lite",
+      "aliases": ["ag-flash-lite", "flash-lite"],
+      "context_window": 1000000,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "description": "Gemini 2.5 Flash Lite via Antigravity",
+      "intelligence_score": 12
+    },
+    {
+      "model_name": "gemini-2.5-pro",
+      "aliases": ["g-pro", "gemini-pro"],
+      "context_window": 2000000,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "description": "Gemini 2.5 Pro via Google (native)",
+      "intelligence_score": 18
+    },
+    {
+      "model_name": "gemini-3-flash-preview",
+      "aliases": ["ag-g3-flash", "g3-flash"],
+      "context_window": 1000000,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "description": "Gemini 3 Flash Preview via Antigravity",
+      "intelligence_score": 16
+    },
+    {
+      "model_name": "gemini-3-pro-preview",
+      "aliases": ["ag-g3-pro", "g3-pro"],
+      "context_window": 2000000,
+      "max_output_tokens": 65536,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "description": "Gemini 3 Pro Preview via Antigravity",
+      "intelligence_score": 19
+    },
+    {
+      "model_name": "gemini-claude-sonnet-4-5-thinking",
+      "aliases": ["ag-sonnet-think"],
+      "context_window": 200000,
+      "max_output_tokens": 64000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "description": "Claude Sonnet 4.5 with thinking via Antigravity",
+      "intelligence_score": 18
+    },
+    {
+      "model_name": "gemini-claude-opus-4-5-thinking",
+      "aliases": ["ag-opus-think"],
+      "context_window": 200000,
+      "max_output_tokens": 64000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "description": "Claude Opus 4.5 with thinking via Antigravity",
+      "intelligence_score": 20
+    },
+    {
+      "model_name": "claude-opus-4-5-20251101",
+      "aliases": ["anthropic-opus", "a-opus"],
+      "context_window": 200000,
+      "max_output_tokens": 64000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "description": "Claude Opus 4.5 via Anthropic (direct)",
+      "intelligence_score": 20
+    },
+    {
+      "model_name": "claude-sonnet-4-5-20250929",
+      "aliases": ["anthropic-sonnet", "a-sonnet"],
+      "context_window": 200000,
+      "max_output_tokens": 64000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "description": "Claude Sonnet 4.5 via Anthropic (direct)",
+      "intelligence_score": 17
+    },
+    {
+      "model_name": "claude-sonnet-4.5",
+      "aliases": ["gh-sonnet", "copilot-sonnet"],
+      "context_window": 200000,
+      "max_output_tokens": 64000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "description": "Claude Sonnet 4.5 via GitHub Copilot",
+      "intelligence_score": 17
+    },
+    {
+      "model_name": "claude-opus-4.5",
+      "aliases": ["gh-opus", "copilot-opus"],
+      "context_window": 200000,
+      "max_output_tokens": 64000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "description": "Claude Opus 4.5 via GitHub Copilot",
+      "intelligence_score": 20
+    },
+    {
+      "model_name": "claude-haiku-4.5",
+      "aliases": ["gh-haiku", "copilot-haiku"],
+      "context_window": 200000,
       "max_output_tokens": 64000,
       "supports_extended_thinking": false,
-      "supports_json_mode": false,
-      "supports_function_calling": false,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "description": "Claude Haiku 4.5 via GitHub Copilot",
+      "intelligence_score": 12
+    },
+    {
+      "model_name": "gpt-5.2-codex",
+      "aliases": ["gh-codex", "copilot-codex"],
+      "context_window": 400000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "description": "GPT 5.2 Codex via GitHub Copilot",
+      "intelligence_score": 18
+    },
+    {
+      "model_name": "gpt-5.2",
+      "aliases": ["gh-gpt5", "copilot-gpt5"],
+      "context_window": 400000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
+      "supports_images": true,
+      "description": "GPT 5.2 via GitHub Copilot",
+      "intelligence_score": 16
+    },
+    {
+      "model_name": "gpt-5-codex-mini",
+      "aliases": ["openai-codex-mini"],
+      "context_window": 400000,
+      "max_output_tokens": 128000,
+      "supports_extended_thinking": true,
+      "supports_json_mode": true,
+      "supports_function_calling": true,
       "supports_images": false,
-      "max_image_size_mb": 0.0,
-      "description": "Local Llama 3.2 model via custom endpoint (Ollama/vLLM) - 128K context window (text-only)",
-      "intelligence_score": 6
+      "description": "GPT 5 Codex Mini via OpenAI (direct)",
+      "intelligence_score": 14
     }
   ]
 }
